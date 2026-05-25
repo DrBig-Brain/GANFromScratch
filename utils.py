@@ -10,7 +10,7 @@ def gradient_penalty(critic, real, fake, device = "cpu"):
 
     gradient = torch.autograd.grad(
         inputs = interpolated_images,
-        output = mixed_score,
+        outputs = mixed_score,
         grad_outputs = torch.ones_like(mixed_score),
         create_graph = True,
         retain_graph = True,

@@ -33,7 +33,7 @@ class Critic(nn.Module):
     def _block(self,in_channels,out_channels, kernel_size,stride,padding):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels,kernel_size,stride,padding,bias=False),
-            nn.InstanceNorm2d2(out_channels,affine=True),
+            nn.InstanceNorm2d(out_channels,affine=True),
             nn.LeakyReLU(0.2)
         )
     
@@ -79,9 +79,9 @@ def test():
     N,in_channels,H,W = 8,3,64,64
     z_dim = 100
     x = torch.randn((N,in_channels,H,W))
-    disc = Discriminator(in_channels,8)
+    critic = Critic(in_channels,8)
     initialize_weights(critic)
-    assert disc(x).shape == (N,1,1,1)
+    assert critic(x).shape == (N,1,1,1)
     gen = Generator(z_dim,in_channels,8)
     initialize_weights(gen)
     z=torch.randn((N,z_dim,1,1))
@@ -135,6 +135,9 @@ step = 0
 gen.train()
 critic.train()
 
+if device == "xpu":
+    torch.xpu.synchronize()
+
 for epoch in range(num_epochs):
     for batch_idx, (real,_) in enumerate(dataloader):
         real = real.to(device)
@@ -142,14 +145,15 @@ for epoch in range(num_epochs):
         start =time.time()
 
         for _ in range(CRITIC_ITERATIONS):
-            noise = torch.randn((batch_size,z_dim,1,1)).to(device)
+            curr_batch_size = real.shape[0]
+            noise = torch.randn((curr_batch_size,z_dim,1,1)).to(device)
             fake = gen(noise).to(device)
             critic_real = critic(real).reshape(-1)
             critic_fake = critic(fake).reshape(-1)
             gp = gradient_penalty(critic, real, fake, device=device)
-            loss_critic = -(
-                torch.mean(critic_real) - torch.mean(critic_fake) + LAMBDA_GP*gp
-                )
+            loss_critic = (
+                -(torch.mean(critic_real) - torch.mean(critic_fake)) + LAMBDA_GP*gp
+            )
             critic.zero_grad()
             loss_critic.backward(retain_graph = True)
             opt_critic.step()
@@ -163,7 +167,7 @@ for epoch in range(num_epochs):
 
         end = time.time()
         if batch_idx % 100 == 0:
-            print(f"Epoch[{epoch}/{num_epochs}] Batch {batch_idx}/{len(dataloader)} \n Loss D: {loss_critic:.4f}, Loss G: {loss_gen:.4f}\nTime Take: {-(start-end)}")
+            print(f"Epoch[{epoch}/{num_epochs}] Batch {batch_idx}/{len(dataloader)} \nLoss D: {loss_critic:.4f}, Loss G: {loss_gen:.4f}\nTime Take: {-(start-end)}")
 
         with torch.no_grad():
             fake = gen(fixed_noise)

@@ -3,3 +3,4 @@ dataset/
 DCGAN/ 
 # Ignoring DCGAN logs because file too big 1.6 GB to many photos logged
 runs/
+__pycache__/
