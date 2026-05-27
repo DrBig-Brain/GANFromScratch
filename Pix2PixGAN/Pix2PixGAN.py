@@ -194,10 +194,10 @@ def main():
         load_checkpoint(config.CHECKPOINT_GEN,gen, opt_gen, config.LEARNING_RATE)
         load_checkpoint(config.CHECKPOINT_DISC,disc, opt_disc, config.LEARNING_RATE)
 
-    train_dataset = Dataset(root_dir="/home/drbigbrain/Desktop/Projects/GANFromScratch/dataset/pix2pix/train")
+    train_dataset = Dataset(root_dir="/home/drbigbrain/Desktop/Projects/GANFromScratch/Pix2PixGAN/dataset/pix2pix/train")
     train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True)
 
-    val_dataset = Dataset(root_dir="/home/drbigbrain/Desktop/Projects/GANFromScratch/dataset/pix2pix/val")
+    val_dataset = Dataset(root_dir="/home/drbigbrain/Desktop/Projects/GANFromScratch/Pix2PixGAN/dataset/pix2pix/val")
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True)
 
     for epoch in range(config.NUM_EPOCHS):
